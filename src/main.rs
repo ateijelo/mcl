@@ -1,13 +1,16 @@
 use anyhow::{bail, Result};
+use clap::Parser;
+use cli::MclArgs;
 use fastanvil::{Block, BlockData, Region};
 use fastnbt::{from_bytes, to_bytes, Value};
 use serde::Deserialize;
 use std::{
     collections::{HashMap, HashSet},
-    env::args,
     fs::File,
     io::Seek,
 };
+
+mod cli;
 
 #[derive(Deserialize, Debug)]
 struct Section {
@@ -48,7 +51,7 @@ fn reset_lighting(mut reg: Region<File>) -> Result<()> {
             continue;
         };
 
-        for section in sections.iter_mut() {
+        for section in sections {
             let Value::Compound(section) = section else {
                 continue;
             };
@@ -143,24 +146,36 @@ fn remove_chunks(mut reg: Region<File>) -> Result<()> {
 }
 
 fn main() -> Result<()> {
-    let action = args().nth(1).unwrap();
-    let filename = args().nth(2).unwrap();
-    let file = File::options().read(true).write(true).open(filename)?;
+    let args = MclArgs::parse();
 
-    let reg = Region::from_stream(file)?;
-
-    match action.as_str() {
-        "prune" => {
-            remove_chunks(reg)?;
-        }
-        "blocks" => {
-            blocks(reg, "diamond")?;
-        }
-        "reset-lighting" => {
-            reset_lighting(reg)?;
-        }
-        _ => {
-            bail!("unknown action: {action}")
+    if let Some(action) = args.action {
+        use cli::Action;
+        match action {
+            Action::Prune(prune_args) => {
+                let file = File::options()
+                    .read(true)
+                    .write(true)
+                    .open(prune_args.region)?;
+                let reg = Region::from_stream(file)?;
+                remove_chunks(reg)?;
+            }
+            // "blocks" => {
+            //     blocks(reg, "diamond")?;
+            // }
+            // _ => {
+            //     bail!("unknown action: {action}")
+            // }
+            Action::ResetLighting(rl_args) => {
+                let file = File::options()
+                    .read(true)
+                    .write(true)
+                    .open(rl_args.region)?;
+                let reg = Region::from_stream(file)?;
+                reset_lighting(reg)?;
+            }
+            Action::Blocks(block_args) => {
+                println!("{:?}", block_args);
+            }
         }
     }
 
