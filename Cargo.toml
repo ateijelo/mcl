@@ -8,7 +8,11 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.71"
 clap = { version = "4.3.21", features = ["derive", "env"] }
+env_logger = "0.10.0"
 fastanvil = "0.28.0"
 fastnbt = "2.4.4"
+kiddo = "2.1.2"
+log = "0.4.20"
+rayon = "1.8.0"
 serde = "1.0.164"
 serde_json = "1.0.99"
