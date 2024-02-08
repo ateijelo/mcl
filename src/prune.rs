@@ -1,9 +1,8 @@
 use crate::cli::Dimension;
-use crate::nbt;
+use crate::nbt::load_chunk;
 
 use anyhow::{bail, Context, Result};
 use fastanvil::Region;
-use fastnbt::from_bytes;
 use kiddo::{distance::squared_euclidean, float::kdtree::KdTree};
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
@@ -61,7 +60,7 @@ pub(crate) fn read_inhabited_time(
                 let x = reg_x * 32 + raw_chunk.x as i32;
                 let z = reg_z * 32 + raw_chunk.z as i32;
 
-                let chunk = match from_bytes::<nbt::Chunk>(raw_chunk.data.as_slice()) {
+                let chunk = match load_chunk(raw_chunk.data.as_slice()) {
                     Ok(c) => c,
                     Err(e) => {
                         log::debug!("reading chunk {x} {z}: {:?}", e);
@@ -69,7 +68,7 @@ pub(crate) fn read_inhabited_time(
                     }
                 };
 
-                chunk_age.insert((x, z), chunk.inhabited_time);
+                chunk_age.insert((x, z), chunk.inhabited_time());
             }
             log::debug!("region {} has {} chunks", &path.display(), chunk_age.len());
             Ok(chunk_age)
@@ -131,7 +130,7 @@ pub(crate) fn remove_chunks(
         let x = reg_x * 32 + raw_chunk.x as i32;
         let z = reg_z * 32 + raw_chunk.z as i32;
 
-        let r = from_bytes::<nbt::Chunk>(raw_chunk.data.as_slice());
+        let r = load_chunk(raw_chunk.data.as_slice());
         if r.is_err() {
             // log::debug!(
             //     "error reading chunk {x} {z}: {:?}; not pruning it",

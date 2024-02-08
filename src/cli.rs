@@ -22,6 +22,7 @@ pub enum Action {
     Prune(PruneArgs),
     Blocks(BlockArgs),
     BlockEntities(BlockEntitiesArgs),
+    Entities(EntitiesArgs),
 }
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -86,6 +87,26 @@ pub struct BlockEntitiesArgs {
     #[arg(short, long, default_value_t = false)]
     pub json: bool,
 }
+
+#[derive(Args, Debug)]
+#[command(arg_required_else_help = true)]
+pub struct EntitiesArgs {
+    #[arg(short, long)]
+    pub world: PathBuf,
+
+    #[arg(short, long)]
+    pub dimension: Dimension,
+
+    #[arg(short, long, value_parser=parse_coords)]
+    pub from: Option<Coords>,
+
+    #[arg(short, long, value_parser=parse_coords)]
+    pub to: Option<Coords>,
+
+    #[arg(short, long, default_value_t = false)]
+    pub json: bool,
+}
+
 
 fn parse_coords(coords: &str) -> Result<Coords> {
     let v: Result<Vec<i32>, ParseIntError> =

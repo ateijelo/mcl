@@ -3,6 +3,7 @@ use clap::Parser;
 use cli::{Coords, Dimension, MclArgs};
 use fastanvil::Region;
 use fastnbt::{from_bytes, from_value, to_bytes, Value};
+use nbt::load_chunk;
 use std::{
     collections::{HashMap, HashSet},
     fs::File,
@@ -15,6 +16,7 @@ use crate::nbt::BlockEntity;
 mod cli;
 mod nbt;
 mod prune;
+mod entities;
 
 // fn dump_nbt(data: &[u8]) -> Result<()> {
 //     let compound: HashMap<String, Value> = from_bytes(data)?;
@@ -74,14 +76,17 @@ fn blocks(mut reg: Region<File>, pattern: &str) -> Result<()> {
 
         // dump_nbt(raw_chunk.data.as_slice())?;
 
-        let chunk: nbt::Chunk = from_bytes(raw_chunk.data.as_slice())?;
-        for section in chunk.sections {
+        let chunk = load_chunk(raw_chunk.data.as_slice())?;
+        for section in chunk.sections() {
             // println!("{:#?}", section);
             let mut ids: HashSet<usize> = HashSet::new();
-            let Some(block_states) = section.block_states else {
+            let Some(ref block_states) = section.block_states else {
                 continue;
             };
             for (id, block) in block_states.palette().iter().enumerate() {
+                if block.name() == "minecraft:air" {
+                    continue;
+                }
                 if block.name().contains(pattern) {
                     ids.insert(id);
                 }
@@ -223,7 +228,7 @@ fn block_entities(
                 continue;
             }
 
-            let chunk = match from_bytes::<nbt::Chunk>(raw_chunk.data.as_slice()) {
+            let chunk = match load_chunk(raw_chunk.data.as_slice()) {
                 Ok(c) => c,
                 Err(e) => {
                     // if reading the chunk fails, we count 0 chunks pruned and continue
@@ -231,7 +236,7 @@ fn block_entities(
                     continue;
                 }
             };
-            for entity in chunk.block_entities {
+            for entity in chunk.block_entities() {
                 let pos: BlockEntity = from_value(&entity)?;
                 let pos = (pos.x, pos.y, pos.z);
                 if !within_bounds(&pos, from.as_ref(), to.as_ref()) {
@@ -248,6 +253,7 @@ fn block_entities(
     }
     Ok(())
 }
+
 
 fn main() -> Result<()> {
     env_logger::builder().format_timestamp_millis().init();
@@ -290,6 +296,15 @@ fn main() -> Result<()> {
             }
             Action::BlockEntities(storage_args) => {
                 block_entities(
+                    &storage_args.world,
+                    storage_args.dimension,
+                    storage_args.from,
+                    storage_args.to,
+                    storage_args.json,
+                )?;
+            }
+            Action::Entities(storage_args) => {
+                entities::entities(
                     &storage_args.world,
                     storage_args.dimension,
                     storage_args.from,
