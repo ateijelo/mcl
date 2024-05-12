@@ -41,10 +41,18 @@ pub struct PruneArgs {
     #[arg(short, long)]
     pub dimension: Dimension,
 
-    #[arg(short, long)]
+    #[arg(
+        short,
+        long,
+        help = "prune chunks inhabited for less than this value (measured in ticks)"
+    )]
     pub inhabited_under: u64,
 
-    #[arg(short, long)]
+    #[arg(
+        short,
+        long,
+        help = "also keep chunks within the given radius of the chunks not pruned"
+    )]
     pub buffer: f64,
 }
 
@@ -106,7 +114,6 @@ pub struct EntitiesArgs {
     #[arg(short, long, default_value_t = false)]
     pub json: bool,
 }
-
 
 fn parse_coords(coords: &str) -> Result<Coords> {
     let v: Result<Vec<i32>, ParseIntError> =

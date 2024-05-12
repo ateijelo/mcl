@@ -14,9 +14,9 @@ use std::{
 use crate::nbt::BlockEntity;
 
 mod cli;
+mod entities;
 mod nbt;
 mod prune;
-mod entities;
 
 // fn dump_nbt(data: &[u8]) -> Result<()> {
 //     let compound: HashMap<String, Value> = from_bytes(data)?;
@@ -253,7 +253,6 @@ fn block_entities(
     }
     Ok(())
 }
-
 
 fn main() -> Result<()> {
     env_logger::builder().format_timestamp_millis().init();
