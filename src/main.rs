@@ -18,12 +18,6 @@ mod entities;
 mod nbt;
 mod prune;
 
-// fn dump_nbt(data: &[u8]) -> Result<()> {
-//     let compound: HashMap<String, Value> = from_bytes(data)?;
-//     println!("{:#?}", compound);
-//     Ok(())
-// }
-
 fn reset_lighting(mut reg: Region<File>) -> Result<()> {
     let mut new_chunks = vec![];
 
@@ -237,7 +231,7 @@ fn block_entities(
                 }
             };
             for entity in chunk.block_entities() {
-                let pos: BlockEntity = from_value(&entity)?;
+                let pos: BlockEntity = from_value(entity)?;
                 let pos = (pos.x, pos.y, pos.z);
                 if !within_bounds(&pos, from.as_ref(), to.as_ref()) {
                     log::debug!("entity {reg_x} {reg_z} doesn't intersect bounds, skipping");
